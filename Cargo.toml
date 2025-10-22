@@ -1,0 +1,7 @@
+[package]
+name = "downstage"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+webdriverbidi = "0.2.2"
