@@ -97,6 +97,7 @@ dependencies = [
 name = "downstage"
 version = "0.1.0"
 dependencies = [
+ "tokio",
  "webdriverbidi",
 ]
 
