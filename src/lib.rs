@@ -1,3 +1,16 @@
+use std::{sync::Arc, time::Duration};
+
+use derive_more::Debug;
+use tokio::{process::Child, sync::RwLock};
+use webdriverbidi::{
+    model::{
+        browsing_context::{CloseParameters, CreateParameters, NavigateParameters},
+        common::EmptyParams,
+    },
+    session::WebDriverBiDiSession,
+    webdriver::capabilities::CapabilitiesRequest,
+};
+
 /// BrowserType provides methods to launch a specific browser instance or connect to an existing one.
 pub trait BrowserType {
     fn name(&self) -> &'static str;
@@ -18,12 +31,31 @@ impl BrowserType for Chromium {
     }
 
     async fn launch(&self) -> Browser {
-        todo!()
+        let process = tokio::process::Command::new("chromedriver")
+            .arg("--host=localhost")
+            .arg("--port=4444")
+            .kill_on_drop(true)
+            .spawn()
+            // TODO: custom error type
+            .unwrap();
+        // TODO: wait for specific output
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        let mut session =
+            WebDriverBiDiSession::new("localhost".into(), 4444, CapabilitiesRequest::default());
+        session.start().await.unwrap();
+        Browser {
+            session: Arc::new(RwLock::new(session)),
+            _process: Some(Arc::new(process)),
+        }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Browser;
+pub struct Browser {
+    #[debug(skip)]
+    pub(crate) session: Arc<RwLock<WebDriverBiDiSession>>,
+    pub(crate) _process: Option<Arc<Child>>,
+}
 
 impl Browser {
     pub fn browser_type(&self) -> impl BrowserType {
@@ -32,7 +64,12 @@ impl Browser {
     }
 
     pub async fn close(&self) {
-        todo!()
+        self.session
+            .write()
+            .await
+            .browser_close(EmptyParams::new())
+            .await
+            .unwrap();
     }
 
     pub fn contexts(&self) -> Vec<BrowserContext> {
@@ -44,7 +81,22 @@ impl Browser {
     }
 
     pub async fn new_page(&self) -> Page {
-        todo!()
+        let res = self
+            .session
+            .write()
+            .await
+            .browsing_context_create(CreateParameters {
+                create_type: webdriverbidi::model::browsing_context::CreateType::Tab,
+                reference_context: None,
+                background: None,
+                user_context: None,
+            })
+            .await
+            .unwrap();
+        Page {
+            session: self.session.clone(),
+            id: res.context,
+        }
     }
 
     pub async fn remove_all_listeners(&self) {
@@ -58,7 +110,11 @@ impl Browser {
     // TODO: on('disconnected')
 }
 
-pub struct BrowserContext;
+#[derive(Debug)]
+pub struct BrowserContext {
+    #[debug(skip)]
+    pub(crate) session: Arc<RwLock<WebDriverBiDiSession>>,
+}
 
 impl BrowserContext {
     pub async fn add_cookies(&self) {
@@ -77,7 +133,7 @@ impl BrowserContext {
         todo!()
     }
 
-    pub async fn close(&self) {
+    pub async fn close(&mut self) {
         todo!()
     }
 
@@ -186,7 +242,12 @@ impl BrowserContext {
     // TODO: on('close')
 }
 
-pub struct Page;
+#[derive(Debug)]
+pub struct Page {
+    #[debug(skip)]
+    pub(crate) session: Arc<RwLock<WebDriverBiDiSession>>,
+    id: webdriverbidi::model::browsing_context::BrowsingContext,
+}
 
 impl Page {
     pub fn add_init_script(&self) {
@@ -209,8 +270,17 @@ impl Page {
         todo!()
     }
 
-    pub fn close(&self) {
-        todo!()
+    pub async fn close(&self) {
+        let _ = self
+            .session
+            .write()
+            .await
+            .browsing_context_close(CloseParameters {
+                context: self.id.clone(),
+                prompt_unload: None,
+            })
+            .await
+            .unwrap();
     }
 
     pub fn console_messages(&self) {
@@ -293,8 +363,17 @@ impl Page {
         todo!()
     }
 
-    pub async fn goto(&self, _url: &str) {
-        todo!()
+    pub async fn goto(&self, url: &str) {
+        self.session
+            .write()
+            .await
+            .browsing_context_navigate(NavigateParameters {
+                context: self.id.clone(),
+                url: url.to_string(),
+                wait: None,
+            })
+            .await
+            .unwrap();
     }
 
     pub fn is_closed(&self) {
