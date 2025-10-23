@@ -1,7 +1,12 @@
-use std::{sync::Arc, time::Duration};
+use std::{process::Stdio, sync::Arc, time::Duration};
 
 use derive_more::Debug;
-use tokio::{process::Child, sync::RwLock};
+use regex::Regex;
+use tokio::{
+    io::{AsyncBufReadExt, BufReader, Stdout},
+    process::Child,
+    sync::RwLock,
+};
 use webdriverbidi::{
     model::{
         browsing_context::{CloseParameters, CreateParameters, NavigateParameters},
@@ -31,21 +36,56 @@ impl BrowserType for Chromium {
     }
 
     async fn launch(&self) -> Browser {
-        let process = tokio::process::Command::new("chromedriver")
-            .arg("--host=localhost")
-            .arg("--port=4444")
+        let mut child = tokio::process::Command::new("chromedriver")
+            .stdout(Stdio::piped())
             .kill_on_drop(true)
             .spawn()
             // TODO: custom error type
             .unwrap();
-        // TODO: wait for specific output
-        tokio::time::sleep(Duration::from_secs(10)).await;
+
+        let port = wait_for_chromedriver(&mut child).await;
+
         let mut session =
-            WebDriverBiDiSession::new("localhost".into(), 4444, CapabilitiesRequest::default());
+            WebDriverBiDiSession::new("localhost".into(), port, CapabilitiesRequest::default());
         session.start().await.unwrap();
         Browser {
             session: Arc::new(RwLock::new(session)),
-            _process: Some(Arc::new(process)),
+            _process: Some(Arc::new(child)),
+        }
+    }
+}
+
+/// Wait for chromedriver to actually startup and establish.
+///
+/// Returns the port.
+async fn wait_for_chromedriver(child: &mut Child) -> u16 {
+    let stdout = child
+        .stdout
+        .take()
+        .expect("Child process should have stdout");
+
+    let mut reader = BufReader::new(stdout);
+    let mut line = String::new();
+
+    let re = Regex::new(r"ChromeDriver was started successfully on port (\d+).")
+        .expect("regex should compile");
+
+    loop {
+        line.clear();
+        let bytes_read = reader.read_line(&mut line).await.unwrap();
+        if bytes_read == 0 {
+            // TODO: should return spawn error
+            panic!("fail to spawn");
+        }
+
+        if let Some(capture) = re.captures(&line) {
+            let port = capture
+                .get(1)
+                .expect("capture should have one group")
+                .as_str()
+                .parse()
+                .expect("regex should capture number");
+            return port;
         }
     }
 }
