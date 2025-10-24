@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use downstage::{BrowserType, Chromium};
+use downstage::browser_type::{BrowserType, Chromium};
 
 #[tokio::main]
 async fn main() {
