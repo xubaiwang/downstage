@@ -1,14 +1,15 @@
-use std::{process::Stdio, sync::Arc, time::Duration};
+use std::{process::Stdio, sync::Arc};
 
 use derive_more::Debug;
 use regex::Regex;
 use tokio::{
-    io::{AsyncBufReadExt, BufReader, Stdout},
+    io::{AsyncBufReadExt, BufReader},
     process::Child,
     sync::RwLock,
 };
 use webdriverbidi::{
     model::{
+        browser::{CreateUserContextParameters, RemoveUserContextParameters, UserContext},
         browsing_context::{CloseParameters, CreateParameters, NavigateParameters},
         common::EmptyParams,
     },
@@ -16,7 +17,6 @@ use webdriverbidi::{
     webdriver::capabilities::CapabilitiesRequest,
 };
 
-/// BrowserType provides methods to launch a specific browser instance or connect to an existing one.
 pub trait BrowserType {
     fn name(&self) -> &'static str;
     fn connect(&self) -> impl Future<Output = Browser>;
@@ -120,6 +120,24 @@ impl Browser {
         todo!()
     }
 
+    pub async fn new_context(&self) -> BrowserContext {
+        let res = self
+            .session
+            .write()
+            .await
+            .browser_create_user_context(CreateUserContextParameters {
+                accept_insecure_certs: None,
+                proxy: None,
+                unhandled_prompt_behavior: None,
+            })
+            .await
+            .unwrap();
+        BrowserContext {
+            session: self.session.clone(),
+            id: res.user_context,
+        }
+    }
+
     pub async fn new_page(&self) -> Page {
         let res = self
             .session
@@ -154,6 +172,7 @@ impl Browser {
 pub struct BrowserContext {
     #[debug(skip)]
     pub(crate) session: Arc<RwLock<WebDriverBiDiSession>>,
+    id: UserContext,
 }
 
 impl BrowserContext {
@@ -174,7 +193,14 @@ impl BrowserContext {
     }
 
     pub async fn close(&mut self) {
-        todo!()
+        self.session
+            .write()
+            .await
+            .browser_remove_user_context(RemoveUserContextParameters {
+                user_context: self.id.clone(),
+            })
+            .await
+            .unwrap();
     }
 
     pub fn cookies(&self) -> Vec<()> {
