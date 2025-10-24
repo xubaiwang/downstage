@@ -56,68 +56,68 @@ Legends used in status:
 
 ## Browser
 
-| Status | Playweight                     | WebDriver Bidi              | Note                                          |
-| ------ | ------------------------------ | --------------------------- | --------------------------------------------- |
-| ❌     | `Browser.browserType`          | N/A                         | Implemented as property.                      |
-| ❌     | `Browser.close`                | `browser.close`             |                                               |
-| ❌     | `Browser.contexts`             | `browser.getUserContexts`   | Playwright implements it as property instead. |
-| ❌     | `Browser.isConnected`          | N/A                         | Check whether internal connection is closed.  |
-| 🚫     | `Browser.newBrowserCDPSession` | N/A                         | We use WebDriver Bidi, not CDP.               |
-| ❌     | `Browser.newContext`           | `browser.createUserContext` |                                               |
-| ❌     | `Browser.newPage`              | `browseringContext.create`  |                                               |
-| ❌     | `Browser.removeAllListeners`   | N/A                         | Listeners are internally managed.             |
-| 🚫     | `Browser.startTracing`         | N/A                         | Tracing is CDP specific.                      |
-| 🚫     | `Browser.stopTracing`          | N/A                         | Tracing is CDP specific.                      |
-| 🚧     | `Browser.version`              | `session.new`               | Not yet exposed in upstream `webdriverbidi`.  |
-| ❌     | `Browser.on('disconnected')`   | N/A                         | Check whether connection is closed            |
+| Status | Playweight                     | WebDriver Bidi              | Note                                         |
+| ------ | ------------------------------ | --------------------------- | -------------------------------------------- |
+| ✅     | `Browser.browserType`          | N/A                         | Implemented as property.                     |
+| ✅     | `Browser.close`                | `browser.close`             |                                              |
+| ✅     | `Browser.contexts`             | `browser.getUserContexts`   | Async instead.                               |
+| 🚧     | `Browser.isConnected`          | N/A                         | Check whether internal connection is closed. |
+| 🚫     | `Browser.newBrowserCDPSession` | N/A                         | We use WebDriver Bidi, not CDP.              |
+| ✅     | `Browser.newContext`           | `browser.createUserContext` |                                              |
+| ✅     | `Browser.newPage`              | `browseringContext.create`  |                                              |
+| 🚧     | `Browser.removeAllListeners`   | N/A                         | Listeners are internally managed.            |
+| 🚫     | `Browser.startTracing`         | N/A                         | Tracing is CDP specific.                     |
+| 🚫     | `Browser.stopTracing`          | N/A                         | Tracing is CDP specific.                     |
+| 🚧     | `Browser.version`              | `session.new`               | Not yet exposed in upstream `webdriverbidi`. |
+| 🚧     | `Browser.on('disconnected')`   | N/A                         | Check whether connection is closed           |
 
 ## BrowserContext
 
-| Status | Playweight                            | WebDriver Bidi | Note                            |
-| ------ | ------------------------------------- | -------------- | ------------------------------- |
-| ❌     | `Browser.addCookies`                  |                |                                 |
-| ❌     | `Browser.addInitScript`               |                |                                 |
-| ❌     | `Browser.browser`                     |                |                                 |
-| ❌     | `Browser.clearCookies`                |                |                                 |
-| ❌     | `Browser.clearPermissions`            |                |                                 |
-| ❌     | `Browser.close`                       |                |                                 |
-| ❌     | `Browser.cookies`                     |                |                                 |
-| ❌     | `Browser.exposeBinding`               |                |                                 |
-| ❌     | `Browser.exposeFunction`              |                |                                 |
-| ❌     | `Browser.grantPermissions`            |                |                                 |
-| 🚫     | `Browser.newCDPSession`               | N/A            | We use WebDriver Bidi, not CDP. |
-| ❌     | `Browser.newPage`                     |                |                                 |
-| ❌     | `Browser.pages`                       |                |                                 |
-| ❌     | `Browser.removeAllListeners`          |                |                                 |
-| ❌     | `Browser.route`                       |                |                                 |
-| ❌     | `Browser.routeFromHAR`                |                |                                 |
-| ❌     | `Browser.routeWebSocket`              |                |                                 |
-| ❌     | `Browser.serviceWorkers`              |                |                                 |
-| ❌     | `Browser.setDefaultNavigationTimeout` |                |                                 |
-| ❌     | `Browser.setDefaultTimeout`           |                |                                 |
-| ❌     | `Browser.setExtraHTTPHeaders`         |                |                                 |
-| ❌     | `Browser.setGeolocation`              |                |                                 |
-| ❌     | `Browser.setOffline`                  |                |                                 |
-| ❌     | `Browser.storageState`                |                |                                 |
-| ❌     | `Browser.unroute`                     |                |                                 |
-| ❌     | `Browser.unrouteAll`                  |                |                                 |
-| ❌     | `Browser.waitForEvent`                |                |                                 |
-| ❌     | `Browser.clock`                       |                |                                 |
-| ❌     | `Browser.request`                     |                |                                 |
-| ❌     | `Browser.tracing`                     |                |                                 |
-| ❌     | `Browser.on('close')`                 |                |                                 |
-| ❌     | `Browser.on('console')`               |                |                                 |
-| ❌     | `Browser.on('dialog')`                |                |                                 |
-| ❌     | `Browser.on('page')`                  |                |                                 |
-| ❌     | `Browser.on('request')`               |                |                                 |
-| ❌     | `Browser.on('requestfailed')`         |                |                                 |
-| ❌     | `Browser.on('requestfinished')`       |                |                                 |
-| ❌     | `Browser.on('response')`              |                |                                 |
-| ❌     | `Browser.on('serviceworker')`         |                |                                 |
-| ❌     | `Browser.on('weberror')`              |                |                                 |
-| ❌     | `Browser.on('backgroundpage')`        |                |                                 |
-| ❌     | `Browser.backgroundPages`             |                |                                 |
-| ❌     | `Browser.setHTTPCredentials`          |                |                                 |
+| Status | Playweight                                   | WebDriver Bidi | Note                            |
+| ------ | -------------------------------------------- | -------------- | ------------------------------- |
+| ❌     | `BrowserContext.addCookies`                  |                |                                 |
+| ❌     | `BrowserContext.addInitScript`               |                |                                 |
+| ❌     | `BrowserContext.browser`                     |                |                                 |
+| ❌     | `BrowserContext.clearCookies`                |                |                                 |
+| ❌     | `BrowserContext.clearPermissions`            |                |                                 |
+| ❌     | `BrowserContext.close`                       |                |                                 |
+| ❌     | `BrowserContext.cookies`                     |                |                                 |
+| ❌     | `BrowserContext.exposeBinding`               |                |                                 |
+| ❌     | `BrowserContext.exposeFunction`              |                |                                 |
+| ❌     | `BrowserContext.grantPermissions`            |                |                                 |
+| 🚫     | `BrowserContext.newCDPSession`               | N/A            | We use WebDriver Bidi, not CDP. |
+| ❌     | `BrowserContext.newPage`                     |                |                                 |
+| ❌     | `BrowserContext.pages`                       |                |                                 |
+| ❌     | `BrowserContext.removeAllListeners`          |                |                                 |
+| ❌     | `BrowserContext.route`                       |                |                                 |
+| ❌     | `BrowserContext.routeFromHAR`                |                |                                 |
+| ❌     | `BrowserContext.routeWebSocket`              |                |                                 |
+| ❌     | `BrowserContext.serviceWorkers`              |                |                                 |
+| ❌     | `BrowserContext.setDefaultNavigationTimeout` |                |                                 |
+| ❌     | `BrowserContext.setDefaultTimeout`           |                |                                 |
+| ❌     | `BrowserContext.setExtraHTTPHeaders`         |                |                                 |
+| ❌     | `BrowserContext.setGeolocation`              |                |                                 |
+| ❌     | `BrowserContext.setOffline`                  |                |                                 |
+| ❌     | `BrowserContext.storageState`                |                |                                 |
+| ❌     | `BrowserContext.unroute`                     |                |                                 |
+| ❌     | `BrowserContext.unrouteAll`                  |                |                                 |
+| ❌     | `BrowserContext.waitForEvent`                |                |                                 |
+| ❌     | `BrowserContext.clock`                       |                |                                 |
+| ❌     | `BrowserContext.request`                     |                |                                 |
+| ❌     | `BrowserContext.tracing`                     |                |                                 |
+| ❌     | `BrowserContext.on('close')`                 |                |                                 |
+| ❌     | `BrowserContext.on('console')`               |                |                                 |
+| ❌     | `BrowserContext.on('dialog')`                |                |                                 |
+| ❌     | `BrowserContext.on('page')`                  |                |                                 |
+| ❌     | `BrowserContext.on('request')`               |                |                                 |
+| ❌     | `BrowserContext.on('requestfailed')`         |                |                                 |
+| ❌     | `BrowserContext.on('requestfinished')`       |                |                                 |
+| ❌     | `BrowserContext.on('response')`              |                |                                 |
+| ❌     | `BrowserContext.on('serviceworker')`         |                |                                 |
+| ❌     | `BrowserContext.on('weberror')`              |                |                                 |
+| ❌     | `BrowserContext.on('backgroundpage')`        |                |                                 |
+| ❌     | `BrowserContext.backgroundPages`             |                |                                 |
+| ❌     | `BrowserContext.setHTTPCredentials`          |                |                                 |
 
 ## BrowserServer
 
@@ -136,10 +136,10 @@ Legends used in status:
 | ❌     | `BrowserType.connect`                 | N/A            | Establish WebSocket connection. |
 | 🚫     | `BrowserType.connectOverCDP`          | N/A            | We use WebDriver Bidi, not CDP. |
 | ❌     | `BrowserType.executablePath`          | N/A            | Establish WebSocket connection. |
-| ❌     | `BrowserType.launch`                  | N/A            | Child process and connect.      |
+| ✅     | `BrowserType.launch`                  | N/A            | Child process and connect.      |
 | ❔     | `BrowserType.launchPersistentContext` |                |                                 |
 | ❌     | `BrowserType.launchServer`            | N/A            | Child process, not protocol.    |
-| ❌     | `BrowserType.name`                    | N/A            | Implementation.                 |
+| ✅     | `BrowserType.name`                    | N/A            | Implementation.                 |
 
 ## CDPSession
 

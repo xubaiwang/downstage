@@ -13,39 +13,38 @@ use crate::{
     error::{Error, Result},
 };
 
-// NOTE: keep `&self` here for dyn compatibility.
-pub trait BrowserType {
-    fn name(&self) -> &'static str;
-    fn connect(&self) -> impl Future<Output = Result<Browser>>;
-    fn launch(&self) -> impl Future<Output = Result<Browser>>;
+pub trait BrowserType: std::fmt::Debug + Clone {
+    fn name() -> &'static str;
+    fn connect() -> impl Future<Output = Result<Browser<Self>>>;
+    fn launch() -> impl Future<Output = Result<Browser<Self>>>;
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Chromium;
 
 impl BrowserType for Chromium {
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         "chromium"
     }
 
-    async fn connect(&self) -> Result<Browser> {
+    async fn connect() -> Result<Browser<Self>> {
         todo!()
     }
 
-    async fn launch(&self) -> Result<Browser> {
+    async fn launch() -> Result<Browser<Self>> {
         let mut child = tokio::process::Command::new("chromedriver")
             .stdout(Stdio::piped())
             .kill_on_drop(true)
             .spawn()?;
 
         let port = wait_for_chromedriver(&mut child).await?;
-
         let mut session =
             WebDriverBiDiSession::new("localhost".into(), port, CapabilitiesRequest::default());
         session.start().await?;
         Ok(Browser {
             session: Arc::new(RwLock::new(session)),
             _process: Some(Arc::new(child)),
+            browser_type: Self,
         })
     }
 }

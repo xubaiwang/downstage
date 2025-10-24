@@ -7,21 +7,22 @@ use webdriverbidi::{
     session::WebDriverBiDiSession,
 };
 
-use crate::{browser::Browser, error::Result, page::Page};
+use crate::{browser::Browser, browser_type::BrowserType, error::Result, page::Page};
 
 #[derive(Debug)]
-pub struct BrowserContext {
+pub struct BrowserContext<T: BrowserType> {
     #[debug(skip)]
     pub(crate) session: Arc<RwLock<WebDriverBiDiSession>>,
     pub(crate) id: UserContext,
+    pub(crate) browser: Browser<T>,
 }
 
-impl BrowserContext {
+impl<T: BrowserType> BrowserContext<T> {
     pub async fn add_cookies(&self) {
         todo!()
     }
 
-    pub fn browser(&self) -> Option<Browser> {
+    pub fn browser(&self) -> Option<Browser<T>> {
         todo!()
     }
 

@@ -3,31 +3,30 @@ use std::sync::Arc;
 use derive_more::Debug;
 use tokio::{process::Child, sync::RwLock};
 use webdriverbidi::{
+    events::EventType,
     model::{
-        browser::CreateUserContextParameters, browsing_context::CreateParameters,
+        browser::{CreateUserContextParameters, GetUserContextsResult},
+        browsing_context::CreateParameters,
         common::EmptyParams,
     },
     session::WebDriverBiDiSession,
 };
 
 use crate::{
-    browser_context::BrowserContext,
-    browser_type::{BrowserType, Chromium},
-    error::Result,
-    page::Page,
+    browser_context::BrowserContext, browser_type::BrowserType, error::Result, page::Page,
 };
 
 #[derive(Debug, Clone)]
-pub struct Browser {
+pub struct Browser<T: BrowserType> {
     #[debug(skip)]
     pub(crate) session: Arc<RwLock<WebDriverBiDiSession>>,
     pub(crate) _process: Option<Arc<Child>>,
+    pub(crate) browser_type: T,
 }
 
-impl Browser {
+impl<T: BrowserType> Browser<T> {
     pub fn browser_type(&self) -> impl BrowserType {
-        // TODO: actual implementation
-        Chromium
+        self.browser_type.clone()
     }
 
     pub async fn close(&self) -> Result<()> {
@@ -39,15 +38,28 @@ impl Browser {
         Ok(())
     }
 
-    pub fn contexts(&self) -> Vec<BrowserContext> {
-        todo!()
+    pub async fn contexts(&self) -> Result<Vec<BrowserContext<T>>> {
+        let GetUserContextsResult { user_contexts } = self
+            .session
+            .write()
+            .await
+            .browser_get_user_contexts(EmptyParams::new())
+            .await?;
+        Ok(user_contexts
+            .into_iter()
+            .map(|info| BrowserContext {
+                session: self.session.clone(),
+                id: info.user_context,
+                browser: self.clone(),
+            })
+            .collect())
     }
 
     pub fn is_connected(&self) -> bool {
-        todo!()
+        unimplemented!()
     }
 
-    pub async fn new_context(&self) -> Result<BrowserContext> {
+    pub async fn new_context(&self) -> Result<BrowserContext<T>> {
         let res = self
             .session
             .write()
@@ -61,6 +73,7 @@ impl Browser {
         Ok(BrowserContext {
             session: self.session.clone(),
             id: res.user_context,
+            browser: self.clone(),
         })
     }
 
@@ -83,11 +96,11 @@ impl Browser {
     }
 
     pub async fn remove_all_listeners(&self) {
-        todo!()
+        unimplemented!()
     }
 
     pub fn version(&self) -> String {
-        todo!()
+        unimplemented!()
     }
 
     // TODO: on('disconnected')
