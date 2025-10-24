@@ -13,6 +13,7 @@ use webdriverbidi::{
 use crate::{
     browser_context::BrowserContext,
     browser_type::{BrowserType, Chromium},
+    error::Result,
     page::Page,
 };
 
@@ -29,13 +30,13 @@ impl Browser {
         Chromium
     }
 
-    pub async fn close(&self) {
+    pub async fn close(&self) -> Result<()> {
         self.session
             .write()
             .await
             .browser_close(EmptyParams::new())
-            .await
-            .unwrap();
+            .await?;
+        Ok(())
     }
 
     pub fn contexts(&self) -> Vec<BrowserContext> {
@@ -46,7 +47,7 @@ impl Browser {
         todo!()
     }
 
-    pub async fn new_context(&self) -> BrowserContext {
+    pub async fn new_context(&self) -> Result<BrowserContext> {
         let res = self
             .session
             .write()
@@ -56,15 +57,14 @@ impl Browser {
                 proxy: None,
                 unhandled_prompt_behavior: None,
             })
-            .await
-            .unwrap();
-        BrowserContext {
+            .await?;
+        Ok(BrowserContext {
             session: self.session.clone(),
             id: res.user_context,
-        }
+        })
     }
 
-    pub async fn new_page(&self) -> Page {
+    pub async fn new_page(&self) -> Result<Page> {
         let res = self
             .session
             .write()
@@ -75,12 +75,11 @@ impl Browser {
                 background: None,
                 user_context: None,
             })
-            .await
-            .unwrap();
-        Page {
+            .await?;
+        Ok(Page {
             session: self.session.clone(),
             id: res.context,
-        }
+        })
     }
 
     pub async fn remove_all_listeners(&self) {

@@ -7,7 +7,7 @@ use webdriverbidi::{
     session::WebDriverBiDiSession,
 };
 
-use crate::{browser::Browser, page::Page};
+use crate::{browser::Browser, error::Result, page::Page};
 
 #[derive(Debug)]
 pub struct BrowserContext {
@@ -33,15 +33,15 @@ impl BrowserContext {
         todo!()
     }
 
-    pub async fn close(&mut self) {
+    pub async fn close(&mut self) -> Result<()> {
         self.session
             .write()
             .await
             .browser_remove_user_context(RemoveUserContextParameters {
                 user_context: self.id.clone(),
             })
-            .await
-            .unwrap();
+            .await?;
+        Ok(())
     }
 
     pub fn cookies(&self) -> Vec<()> {

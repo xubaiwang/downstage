@@ -7,6 +7,8 @@ use webdriverbidi::{
     session::WebDriverBiDiSession,
 };
 
+use crate::error::Result;
+
 #[derive(Debug)]
 pub struct Page {
     #[debug(skip)]
@@ -35,7 +37,7 @@ impl Page {
         todo!()
     }
 
-    pub async fn close(&self) {
+    pub async fn close(&self) -> Result<()> {
         let _ = self
             .session
             .write()
@@ -44,8 +46,8 @@ impl Page {
                 context: self.id.clone(),
                 prompt_unload: None,
             })
-            .await
-            .unwrap();
+            .await?;
+        Ok(())
     }
 
     pub fn console_messages(&self) {
@@ -128,7 +130,8 @@ impl Page {
         todo!()
     }
 
-    pub async fn goto(&self, url: &str) {
+    // TODO: return type
+    pub async fn goto(&self, url: &str) -> Result<()> {
         self.session
             .write()
             .await
@@ -137,8 +140,8 @@ impl Page {
                 url: url.to_string(),
                 wait: None,
             })
-            .await
-            .unwrap();
+            .await?;
+        Ok(())
     }
 
     pub fn is_closed(&self) {

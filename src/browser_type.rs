@@ -8,12 +8,16 @@ use tokio::{
 };
 use webdriverbidi::{session::WebDriverBiDiSession, webdriver::capabilities::CapabilitiesRequest};
 
-use crate::browser::Browser;
+use crate::{
+    browser::Browser,
+    error::{Error, Result},
+};
 
+// NOTE: keep `&self` here for dyn compatibility.
 pub trait BrowserType {
     fn name(&self) -> &'static str;
-    fn connect(&self) -> impl Future<Output = Browser>;
-    fn launch(&self) -> impl Future<Output = Browser>;
+    fn connect(&self) -> impl Future<Output = Result<Browser>>;
+    fn launch(&self) -> impl Future<Output = Result<Browser>>;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -24,34 +28,32 @@ impl BrowserType for Chromium {
         "chromium"
     }
 
-    async fn connect(&self) -> Browser {
+    async fn connect(&self) -> Result<Browser> {
         todo!()
     }
 
-    async fn launch(&self) -> Browser {
+    async fn launch(&self) -> Result<Browser> {
         let mut child = tokio::process::Command::new("chromedriver")
             .stdout(Stdio::piped())
             .kill_on_drop(true)
-            .spawn()
-            // TODO: custom error type
-            .unwrap();
+            .spawn()?;
 
-        let port = wait_for_chromedriver(&mut child).await;
+        let port = wait_for_chromedriver(&mut child).await?;
 
         let mut session =
             WebDriverBiDiSession::new("localhost".into(), port, CapabilitiesRequest::default());
-        session.start().await.unwrap();
-        Browser {
+        session.start().await?;
+        Ok(Browser {
             session: Arc::new(RwLock::new(session)),
             _process: Some(Arc::new(child)),
-        }
+        })
     }
 }
 
 /// Wait for chromedriver to actually startup and establish.
 ///
 /// Returns the port.
-async fn wait_for_chromedriver(child: &mut Child) -> u16 {
+async fn wait_for_chromedriver(child: &mut Child) -> Result<u16> {
     let stdout = child
         .stdout
         .take()
@@ -65,10 +67,9 @@ async fn wait_for_chromedriver(child: &mut Child) -> u16 {
 
     loop {
         line.clear();
-        let bytes_read = reader.read_line(&mut line).await.unwrap();
+        let bytes_read = reader.read_line(&mut line).await?;
         if bytes_read == 0 {
-            // TODO: should return spawn error
-            panic!("fail to spawn");
+            return Err(Error::Spawn);
         }
 
         if let Some(capture) = re.captures(&line) {
@@ -78,7 +79,7 @@ async fn wait_for_chromedriver(child: &mut Child) -> u16 {
                 .as_str()
                 .parse()
                 .expect("regex should capture number");
-            return port;
+            return Ok(port);
         }
     }
 }
